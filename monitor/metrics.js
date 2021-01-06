@@ -1,1 +1,0 @@
-const {kc, k8s} = require('../connection/k8sConn');
