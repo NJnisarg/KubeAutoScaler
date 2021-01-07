@@ -7,19 +7,19 @@ class ResourceMap {
     nodes = []
     pods = []
 
-    constructor() {
-
+    constructor(namespace) {
+        this.namespace = namespace
     }
 
-    async deploySvc(templatePath, namespace) {
+    async deploySvc(templatePath) {
         let svc = new Service(templatePath);
-        let resp = await svc.deploy(namespace);
+        let resp = await svc.deploy(this.namespace);
         this.service = svc;
     }
 
-    async deployNewDeployment (templatePath, namespace) {
+    async deployNewDeployment (templatePath) {
         let depl = new Deployment(templatePath);
-        let resp = await depl.deploy(namespace);
+        let resp = await depl.deploy(this.namespace);
         this.deployments.push(depl);
     }
 
@@ -27,8 +27,11 @@ class ResourceMap {
 
     }
 
-    async initialDeployment() {
-
+    async initialDeployment(templatePaths) {
+        let {deplPath, svcPath} = templatePaths
+        await this.deployNewDeployment(deplPath)
+        await this.deploySvc(svcPath)
+        return true
     }
 }
 
