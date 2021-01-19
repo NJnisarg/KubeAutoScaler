@@ -31,7 +31,12 @@ class ResourceMap {
     }
 
     async removeDeployment () {
-
+        if (this.deployments.length > 0) {
+            let depl = this.deployments[0]
+            let resp = await depl.remove(depl.name, this.namespace)
+            this.deployments.shift()
+            console.log(depl.name, " deleted")
+        }
     }
 
     async getCPURequests () {
