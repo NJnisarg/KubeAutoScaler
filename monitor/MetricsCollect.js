@@ -1,9 +1,34 @@
 const axios = require('axios');
 
-const getUsage = async () => {
+const getPodCpuUsage = async (namespace) => {
     let res = await axios.get('http://127.0.0.1:8080/apis/metrics.k8s.io/v1beta1/pods/')
-    let app_pod_metrics = res.data.items.find(x => x.metadata.namespace === "web-app").containers
-    console.log(app_pod_metrics)
+    const podMetrics = res.data.items.filter(x => x.metadata.namespace === namespace)
+    const numPods = podMetrics.length
+    let cpuUtization = 0.0
+    podMetrics.forEach(pod => {
+        pod.containers.forEach(container => {
+            cpuUtization += parseInt(container.usage.cpu.match(/-?\d+\.?\d*/))
+        })
+    });
+
+    return cpuUtization/numPods
 }
 
-getUsage();
+const getPodMemoryUsage = async (namespace) => {
+    let res = await axios.get('http://127.0.0.1:8080/apis/metrics.k8s.io/v1beta1/pods/')
+    const podMetrics = res.data.items.filter(x => x.metadata.namespace === namespace)
+    const numPods = podMetrics.length
+    let memoryUtization = 0.0
+    podMetrics.forEach(pod => {
+        pod.containers.forEach(container => {
+            memoryUtization += parseInt(container.usage.memory.match(/-?\d+\.?\d*/))
+        })
+    });
+
+    return memoryUtization/numPods
+}
+
+module.exports = { 
+    getPodCpuUsage, 
+    getPodMemoryUsage 
+};
