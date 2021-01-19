@@ -1,60 +1,45 @@
-const fs = require('fs');
-const YAML = require('yamljs');
 const { kc, k8s } = require('../connection/k8sConn');
-const { CPUMetrics, MemMetrics } = require('../monitor/MetricsModels');
-const { resourceTypes } = require('./ResourceType')
+
+const PodStatus = {
+    NONE: 'NONE',
+    PENDING: 'Pending',
+    RUNNING: 'Running',
+    UNKNOWN: 'Unknown',
+    SUCCEEDED: 'Succeeded',
+    FAILED: 'Failed'
+}
 
 class Pod {
-    name = null
-    podId = null
-    rawPodObj = null
-    k8sPodObj = null
-    cpuMetrics = null
-    memMetrics = null
-    templatePath = null
-    namespace = null
+    name
+    status = PodStatus.NONE
+    cpuRequest = null
+    memRequest = null
 
-    constructor(templatePath) {
-        this.templatePath = templatePath
+    constructor(name, status, cpuRequest, memRequest)
+    {
+        this.name = name
+        this.status = status
+        this.cpuRequest = cpuRequest
+        this.memRequest = memRequest
     }
 
-    async deploy(namespace){
-        this.namespace = namespace
-        let content = fs.readFileSync(this.templatePath, {encoding: 'utf-8'});
-        this.rawPodObj = YAML.parse(content);
-
-        const resp = {
-            success: false,
-            error: null,
-            message: null,
-            data: null
-        }
-        try{
-            let k8sApi = kc.makeApiClient(k8s.CoreV1Api)
-            let k8sRes = await k8sApi.createNamespacedPod(this.namespace, this.rawPodObj);
-
-            resp.success = true;
-            resp.message = {status: k8sRes.response.statusCode, statusMessage: k8sRes.response.statusMessage}
-            resp.data = k8sRes.body;
-            this.k8sPodObj = resp.data;
-            this.podId = null
-            this.name = null
-            this.cpuMetrics = new CPUMetrics(resourceTypes.POD, this.podId, this.name)
-            this.memMetrics = new MemMetrics(resourceTypes.POD, this.podId, this.name)
-            
-
-        }catch(err)
-        {
-            resp.success = false;
-            resp.error = err;
-        }
-
-        
-        return resp;
-
+    async pollStatus(){
+        let k8sApi2 = kc.makeApiClient(k8s.CoreV1Api)
+        let k8sRes2 = await k8sApi2.listPodForAllNamespaces();
+        k8sRes2.body.items.forEach(pd => {
+            if(pd.metadata.name === this.name)
+                if(pd.status.phase !== this.status)
+                {
+                    this.status = pd.status.phase
+                    console.log(this.status);
+                }
+                
+                if(this.status != PodStatus.RUNNING)
+                    setTimeout(this.pollStatus, 15000);
+        })
     }
 }
 
 module.exports = {
-    Pod
+    Pod, PodStatus
 }

@@ -11,12 +11,20 @@ spec:
       app: web-app # This is connection between the deployment and the pod specified below
   template:
     metadata:
+      name: web-app-depl-pod
       labels:
         app: web-app
     spec:
       containers:
       - name: web-app
         image: yeasy/simple-web
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 200000Ki
+          requests:
+            cpu: 250m
+            memory: 100000Ki
         ports:
         - containerPort: 80 # The port inside the container opened for listening
         

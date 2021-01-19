@@ -1,16 +1,20 @@
 const { Deployment } = require('./Deployment');
 const { Service } = require('./Service');
 const { kc, k8s } = require('../connection/k8sConn');   
-const { V1LabelSelector } = require('@kubernetes/client-node');
+const { PodStatus } = require('./Pod');
 
 class ResourceMap {
+    deplCounter = 0
     deployments = []
     service = null
     nodes = []
-    pods = []
 
     constructor(namespace) {
         this.namespace = namespace
+    }
+
+    async deployNamespace(templatePath) {
+
     }
 
     async deploySvc(templatePath) {
@@ -20,26 +24,42 @@ class ResourceMap {
     }
 
     async deployNewDeployment (templatePath) {
-        let depl = new Deployment(templatePath);
-        // let resp = await depl.deploy(this.namespace);
-        // this.deployments.push(depl);
-
-        let k8sApi = kc.makeApiClient(k8s.CoreV1Api);
-        const re = await k8sApi.listPodForAllNamespaces(undefined, undefined, undefined, 'web-app');
-        console.log(re.body);
-
+        let depl = new Deployment(templatePath, this.namespace + `-depl-${this.deplCounter}`);
+        let resp = await depl.deploy(this.namespace);
+        this.deployments.push(depl);
+        this.deplCounter += 1;
     }
 
     async removeDeployment () {
 
     }
 
-    async getDeplCPURequests () {
+    async getCPURequests () {
+        let totalRequest = 0; // Only consider ready pods
+        let numPods = 0; // Ready + Unready both
+        this.deployments.forEach(depl => {
+            if(depl.pod.status === PodStatus.RUNNING)
+            {
+                totalRequest += depl.pod.cpuRequest;
+                numPods+=1;
+            }
+        })  
 
+        return (numPods, totalRequest);
     }
 
-    async getDeplMemoryRequests () {
+    async getMemoryRequests () {
+        let totalRequest = 0; // Only consider ready pods
+        let numPods = 0; // Ready + Unready both
+        this.deployments.forEach(depl => {
+            if(depl.pod.status === PodStatus.RUNNING)
+            {
+                totalRequest += depl.pod.memRequest;
+                numPods+=1;
+            }
+        })  
 
+        return (numPods, totalRequest);
     }
 
     async addNode () {
@@ -47,9 +67,10 @@ class ResourceMap {
     }
 
     async initialDeployment(templatePaths) {
-        let {deplPath, svcPath} = templatePaths
+        let {namespacePath, deplPath, svcPath} = templatePaths
+        await this.deployNamespace(namespacePath);
         await this.deployNewDeployment(deplPath)
-        // await this.deploySvc(svcPath)
+        await this.deploySvc(svcPath)
         return true
     }
 }

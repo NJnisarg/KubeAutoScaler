@@ -1,7 +1,8 @@
 const axios = require('axios');
+const {k8sConf} = require('../config/k8sConf');
 
 const getPodCpuUsage = async (namespace) => {
-    let res = await axios.get('http://127.0.0.1:8080/apis/metrics.k8s.io/v1beta1/pods/')
+    let res = await axios.get(`${k8sConf.proxyUrl}/apis/metrics.k8s.io/v1beta1/pods/`);
     const podMetrics = res.data.items.filter(x => x.metadata.namespace === namespace)
     const numPods = podMetrics.length
     let cpuUtization = 0.0
@@ -11,11 +12,11 @@ const getPodCpuUsage = async (namespace) => {
         })
     });
 
-    return cpuUtization/numPods
+    return (numPods, cpuUtization);
 }
 
 const getPodMemoryUsage = async (namespace) => {
-    let res = await axios.get('http://127.0.0.1:8080/apis/metrics.k8s.io/v1beta1/pods/')
+    let res = await axios.get(`${k8sConf.proxyUrl}/apis/metrics.k8s.io/v1beta1/pods/`)
     const podMetrics = res.data.items.filter(x => x.metadata.namespace === namespace)
     const numPods = podMetrics.length
     let memoryUtization = 0.0
@@ -25,7 +26,7 @@ const getPodMemoryUsage = async (namespace) => {
         })
     });
 
-    return memoryUtization/numPods
+    return (numPods, memoryUtization);
 }
 
 module.exports = { 
