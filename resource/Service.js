@@ -1,16 +1,12 @@
 const fs = require('fs');
 const YAML = require('yamljs');
 const { kc, k8s } = require('../connection/k8sConn');
-const { CPUMetrics, MemMetrics } = require('../monitor/MetricsModels');
-const { resourceTypes } = require('./ResourceType')
 
 class Service {
     name = null
     svcId = null
     rawSvcObj = null
     k8sSvcObj = null
-    cpuMetrics = null
-    memMetrics = null
     templatePath = null
     namespace = null
 
@@ -39,9 +35,6 @@ class Service {
             this.k8sSvcObj = resp.data;
             this.svcId = null
             this.name = null
-            this.cpuMetrics = new CPUMetrics(resourceTypes.SVC, this.svcId, this.name)
-            this.memMetrics = new MemMetrics(resourceTypes.SVC, this.svcId, this.name)
-            
 
         }catch(err)
         {

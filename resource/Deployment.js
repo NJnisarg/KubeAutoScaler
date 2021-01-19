@@ -1,16 +1,14 @@
 const fs = require('fs');
 const YAML = require('yamljs');
 const { kc, k8s } = require('../connection/k8sConn');
-const { CPUMetrics, MemMetrics } = require('../monitor/MetricsModels');
-const { resourceTypes } = require('./ResourceType')
 
 class Deployment {
     name = null
     deplId = null
     rawDeplObj = null
     k8sDeplObj = null
-    cpuMetrics = null
-    memMetrics = null
+    cpuRequest = null
+    memRequest = null
     templatePath = null
     namespace = null
 
@@ -38,9 +36,9 @@ class Deployment {
             resp.data = k8sRes.body;
             this.k8sDeplObj = resp.data;
             this.deplId = null
-            this.name = null
-            this.cpuMetrics = new CPUMetrics(resourceTypes.DEPL, this.deplId, this.name)
-            this.memMetrics = new MemMetrics(resourceTypes.DEPL, this.deplId, this.name)
+            this.name = resp.data.metadata.name;
+            this.cpuRequest = '';
+            this.memRequest = '';
             
 
         }catch(err)
