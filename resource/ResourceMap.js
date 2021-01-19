@@ -2,6 +2,8 @@ const { Deployment } = require('./Deployment');
 const { Service } = require('./Service');
 const { kc, k8s } = require('../connection/k8sConn');   
 const { PodStatus } = require('./Pod');
+const fs = require('fs');
+const YAML = require('yamljs');
 
 class ResourceMap {
     deplCounter = 0
@@ -14,7 +16,26 @@ class ResourceMap {
     }
 
     async deployNamespace(templatePath) {
-
+        let content = fs.readFileSync(templatePath, {encoding: 'utf-8'});
+        content = YAML.parse(content);
+        const resp = {
+            success: false,
+            error: null,
+            message: null,
+            data: null
+        }
+        try {
+            let k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+            let k8sRes = await k8sApi.createNamespace(content);
+            resp.success = true;
+            resp.message = {status: k8sRes.response.statusCode, statusMessage: k8sRes.response.statusMessage}
+            resp.data = k8sRes.body;
+        }
+        catch (err) {
+            resp.success = false;
+            resp.error = err;
+        }
+        console.log(resp)
     }
 
     async deploySvc(templatePath) {
