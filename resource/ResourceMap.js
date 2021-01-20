@@ -1,18 +1,22 @@
+const fs = require('fs');
+const YAML = require('yamljs');
 const { Deployment } = require('./Deployment');
 const { Service } = require('./Service');
 const { kc, k8s } = require('../connection/k8sConn');   
 const { PodStatus } = require('./Pod');
-const fs = require('fs');
-const YAML = require('yamljs');
+const { Monitor } = require('../monitor/Monitor');
 
 class ResourceMap {
     deplCounter = 0
     deployments = []
     service = null
     nodes = []
+    monitor = null
+    templatePath = '/home/njnisarg/KubeAutoScaler/deployment_template/depl.yml'
 
     constructor(namespace) {
         this.namespace = namespace
+        this.monitor = new Monitor(this.namespace);
     }
 
     async deployNamespace(templatePath) {
@@ -35,7 +39,6 @@ class ResourceMap {
             resp.success = false;
             resp.error = err;
         }
-        console.log(resp)
     }
 
     async deploySvc(templatePath) {
@@ -44,8 +47,8 @@ class ResourceMap {
         this.service = svc;
     }
 
-    async deployNewDeployment (templatePath) {
-        let depl = new Deployment(templatePath, this.namespace + `-depl-${this.deplCounter}`);
+    async deployNewDeployment () {
+        let depl = new Deployment(this.templatePath, this.namespace + `-depl-${this.deplCounter}`);
         let resp = await depl.deploy(this.namespace);
         this.deployments.push(depl);
         this.deplCounter += 1;
@@ -60,7 +63,7 @@ class ResourceMap {
         }
     }
 
-    async getCPURequests () {
+    getCPURequests () {
         let totalRequest = 0; // Only consider ready pods
         let numPods = 0; // Ready + Unready both
         this.deployments.forEach(depl => {
@@ -71,7 +74,7 @@ class ResourceMap {
             }
         })  
 
-        return (numPods, totalRequest);
+        return {numPods, totalRequest};
     }
 
     async getMemoryRequests () {
@@ -85,18 +88,14 @@ class ResourceMap {
             }
         })  
 
-        return (numPods, totalRequest);
-    }
-
-    async addNode () {
-
+        return {numPods, totalRequest};
     }
 
     async initialDeployment(templatePaths) {
         let {namespacePath, deplPath, svcPath} = templatePaths
         await this.deployNamespace(namespacePath);
-        await this.deployNewDeployment(deplPath)
-        await this.deploySvc(svcPath)
+        await this.deployNewDeployment();
+        await this.deploySvc(svcPath);
         return true
     }
 }

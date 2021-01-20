@@ -22,24 +22,21 @@ class Pod {
         this.cpuRequest = cpuRequest
         this.memRequest = memRequest
     }
+}
 
-    async pollStatus(){
-        let k8sApi2 = kc.makeApiClient(k8s.CoreV1Api)
-        let k8sRes2 = await k8sApi2.listPodForAllNamespaces();
-        k8sRes2.body.items.forEach(pd => {
-            if(pd.metadata.name === this.name)
-                if(pd.status.phase !== this.status)
-                {
-                    this.status = pd.status.phase
-                    console.log(this.status);
-                }
-                
-                if(this.status != PodStatus.RUNNING)
-                    setTimeout(this.pollStatus, 15000);
-        })
-    }
+const pollPodStatus = async (pod) => {
+    console.log(`${pod.name}:`, pod.status);
+    let k8sApi2 = kc.makeApiClient(k8s.CoreV1Api);
+    let k8sRes2 = await k8sApi2.listPodForAllNamespaces();
+    k8sRes2.body.items.forEach(pd => {
+        if(pd.metadata.name === pod.name)
+            if(pd.status.phase !== pod.status)
+                pod.status = pd.status.phase
+
+    })
+    setTimeout(pollPodStatus, 10000, pod);
 }
 
 module.exports = {
-    Pod, PodStatus
+    Pod, PodStatus, pollPodStatus
 }

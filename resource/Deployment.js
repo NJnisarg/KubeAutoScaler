@@ -1,7 +1,7 @@
 const fs = require('fs');
 const YAML = require('yamljs');
 const { kc, k8s } = require('../connection/k8sConn');
-const { Pod } = require('./Pod');
+const { Pod, pollPodStatus } = require('./Pod');
 
 class Deployment {
     name = null
@@ -41,17 +41,24 @@ class Deployment {
             this.k8sDeplObj = resp.data;
             
             // Setting Pods inside Deployment
-            let k8sApi2 = kc.makeApiClient(k8s.CoreV1Api);
-            let k8sRes2 = await k8sApi2.listPodForAllNamespaces();
-            k8sRes2.body.items.forEach(pd => {
-                if(pd.metadata.name.includes(this.name))
-                    this.pod = new Pod(pd.metadata.name, pd.status.phase, 250, 100000);
-            })
-
-            console.log(this.pod);
-
+            while(!this.pod)
+            {
+                let k8sApi2 = kc.makeApiClient(k8s.CoreV1Api);
+                let k8sRes2 = await k8sApi2.listPodForAllNamespaces();
+                k8sRes2.body.items.forEach(pd => {
+                    if(pd.metadata.name.includes(this.name))
+                    {
+                        console.log(pd.metadata.name);
+                        this.pod = new Pod(pd.metadata.name, pd.status.phase, 2*250, 2*100000); // For 2 containers inside a POD. One for our own and one for linkerd
+                    }
+                        
+                })
+            }
+            
+            
             // For polling the status of the pod
-            this.pod.pollStatus();
+            console.log("POD:", this.pod);
+            pollPodStatus(this.pod);
             
 
         }catch(err)

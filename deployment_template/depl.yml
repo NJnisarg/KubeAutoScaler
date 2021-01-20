@@ -11,7 +11,6 @@ spec:
       app: web-app # This is connection between the deployment and the pod specified below
   template:
     metadata:
-      name: web-app-depl-pod
       labels:
         app: web-app
     spec:

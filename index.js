@@ -1,4 +1,5 @@
 const { ResourceMap } = require('./resource/ResourceMap');
+const { main } = require('./autoscaler/checker');
 
 const config = {
     'namespace':'web-app',
@@ -9,9 +10,8 @@ const config = {
 
 const run = async () => {
     let resMap = new ResourceMap(config.namespace);
-    await resMap.deployNamespace(config.initNamespacePath)
-    console.log("Log 2")
-    //await resMap.initialDeployment({namespacePath: config.initNamespacePath, deplPath: config.initDeplPath, svcPath: config.initSvcPath});
+    await resMap.initialDeployment({namespacePath: config.initNamespacePath, deplPath: config.initDeplPath, svcPath: config.initSvcPath});
+    main(resMap, 75);
 }
 
 run();

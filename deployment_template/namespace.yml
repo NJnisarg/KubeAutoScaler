@@ -6,3 +6,5 @@ metadata:
     name: web-app
   annotations:
     linkerd.io/inject: enabled
+    config.linkerd.io/proxy-cpu-request: 250m
+    config.linkerd.io/proxy-memory-request: 100000Ki

@@ -1,6 +1,6 @@
 const resourceUtilizationRatio = (Usage,request,targetUtilization) => {
-    currentUtilization = (Usage*100)/request
-    return float(currentUtilization)/float(targetUtilization)
+    currentUtilization = Usage/request
+    return currentUtilization/targetUtilization
 }
 
 module.exports = {
