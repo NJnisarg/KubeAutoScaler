@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: web-app
-        image: yeasy/simple-web
+        image: njnisarg/kube-auto-scaler:web_app
         resources:
           limits:
             cpu: 1000m
@@ -25,5 +25,5 @@ spec:
             cpu: 250m
             memory: 100000Ki
         ports:
-        - containerPort: 80 # The port inside the container opened for listening
+        - containerPort: 3000 # The port inside the container opened for listening
         

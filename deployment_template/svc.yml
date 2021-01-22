@@ -8,6 +8,6 @@ spec:
     app: web-app
   ports:
     - protocol: TCP
-      port: 80 # The port opened for listening
-      targetPort: 80 # The port on the pod to forward the request 
+      port: 3000 # The port opened for listening
+      targetPort: 3000 # The port on the pod to forward the request 
       nodePort: 30001 # The port of the node to be exposed

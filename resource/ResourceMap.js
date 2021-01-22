@@ -67,10 +67,13 @@ class ResourceMap {
         let totalRequest = 0; // Only consider ready pods
         let numPods = 0; // Ready + Unready both
         this.deployments.forEach(depl => {
-            if(depl.pod.status === PodStatus.RUNNING)
+            if(depl.pod)
             {
-                totalRequest += depl.pod.cpuRequest;
-                numPods+=1;
+                if(depl.pod.status === PodStatus.RUNNING)
+                {
+                    totalRequest += depl.pod.cpuRequest;
+                    numPods+=1;
+                }
             }
         })  
 
