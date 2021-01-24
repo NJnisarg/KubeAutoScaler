@@ -17,13 +17,14 @@ spec:
       containers:
       - name: web-app
         image: njnisarg/kube-auto-scaler:web_app
+        imagePullPolicy: Always
         resources:
           limits:
-            cpu: 1000m
-            memory: 200000Ki
+            cpu: 300m
+            memory: 150000Ki
           requests:
-            cpu: 250m
-            memory: 100000Ki
+            cpu: 300m
+            memory: 150000Ki
         ports:
         - containerPort: 3000 # The port inside the container opened for listening
         

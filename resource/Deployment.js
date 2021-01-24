@@ -21,7 +21,6 @@ class Deployment {
         let content = fs.readFileSync(this.templatePath, {encoding: 'utf-8'});
         this.rawDeplObj = YAML.parse(content);
         this.rawDeplObj.metadata.name = this.name;
-        this.rawDeplObj.spec.template.metadata.name = this.name + '-pod';
 
         const resp = {
             success: false,
@@ -49,7 +48,7 @@ class Deployment {
                     if(pd.metadata.name.includes(this.name))
                     {
                         console.log(pd.metadata.name);
-                        this.pod = new Pod(pd.metadata.name, pd.status.phase, 2*250, 2*100000); // For 2 containers inside a POD. One for our own and one for linkerd
+                        this.pod = new Pod(pd.metadata.name, pd.status.phase, 1*300, 1*100000); // For 2 containers inside a POD. One for our own and one for linkerd
                     }
                         
                 })
@@ -65,6 +64,7 @@ class Deployment {
         {
             resp.success = false;
             resp.error = err;
+            console.log("Error creating a new Deployment", err);
         }
         return resp;
 

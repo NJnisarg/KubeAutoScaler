@@ -15,20 +15,26 @@ const check = async (resMap,targetUtilization) => {
     let ratio = resourceUtilizationRatio(cpuUtization,totalRequest,targetUtilization);
 
     let value = decision(ratio, numPods);
-    let diff = Math.floor(value - numPods);
+    let diff = Math.ceil(value - numPods);
 
     console.log("DIFF:", diff);
 
     if(diff>0){
         for(let i=0;i<diff;i++){
-            resMap.deployNewDeployment()
+            await resMap.deployNewDeployment()
         }
     }
     else{
-        if(numPods > 1)
+        diff = Math.max(Math.abs(Math.ceil(diff/2)), 0)
+        if(diff >= numPods)
         {
-            for(let i=0;i<Math.abs(diff);i++){
-                resMap.removeDeployment()
+            for(let i=0;i<numPods-1;i++){
+                await resMap.removeDeployment()
+            }
+        }
+        else{
+            for(let i=0;i<diff;i++){
+                await resMap.removeDeployment()
             }
         }
     }
