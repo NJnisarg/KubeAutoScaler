@@ -15,8 +15,7 @@ class ResourceMap {
     templatePath = '/home/njnisarg/KubeAutoScaler/deployment_template/depl.yml'
 
     constructor(namespace) {
-        this.namespace = namespace
-        this.monitor = new Monitor(this.namespace);
+        this.namespace = namespace;
     }
 
     async deployNamespace(templatePath) {

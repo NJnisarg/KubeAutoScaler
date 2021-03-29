@@ -10,7 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.2",
+    "arima": "^0.2.1",
     "axios": "^0.21.1",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "fast-csv": "^4.3.6",
     "yamljs": "^0.3.0"
   }
 }

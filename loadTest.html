@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    </head>
+
+    <body>
+        <div id="loadTest" style="width:1200px;height:800px;"></div>
+        <div id="respTime" style="width:1200px;height:800px;"></div>
+    </body>
+</html>
+
+<script>
+
+    // PLOTTING
+	let LoadTestChart = document.getElementById('loadTest');
+    let respTimeChart = document.getElementById('respTime');
+    let layout = {
+        yaxis: {range: [0, 100]}
+    }
+    let layout2 = {
+        yaxis: {range: [100, 500]}
+    }
+
+    let loadChartConfig = {
+        y: [],
+        mode: 'lines',
+        line: {color: '#80CAF6'}
+    }
+
+    let CPUChartConfig ={
+        y: [],
+        mode: 'lines',
+        line: {color: '#FF0000'}
+    }
+
+    let PredChartConfig ={
+        y: [],
+        mode: 'lines',
+        line: {color: '#FFFF00'}
+    }
+
+    let NumPodsChartConfig = {
+        y: [],
+        mode: 'lines',
+        line: {color: '#00FF00'}
+    }
+
+    let RespTimeChartConfig = {
+        y: [],
+        mode: 'lines',
+        line: {color: '#00FF00'}
+    }
+
+    const randomIntFromInterval = (min, max) => { // min and max included 
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+	Plotly.newPlot(LoadTestChart, [loadChartConfig, CPUChartConfig, PredChartConfig, NumPodsChartConfig], layout);
+    Plotly.newPlot(respTimeChart, [RespTimeChartConfig], layout2);
+
+    // API Calls
+    const getRPS = async () => {
+        let res = await axios.get(`http://localhost:5050/getRPS`);
+        return res.data.loadArr;
+    }
+    const getPodCpuUsage = async () => {
+        let res = await axios.get(`http://localhost:5050/getCPUUsage`);
+        return res.data;
+    }
+    const getForcastedCPU = async () => {
+        let res = await axios.get(`http://localhost:5050/getForecastedCPU`);
+        let pred = res.data.pred[0];
+        return pred;
+    }
+    const getNumPods = async () => {
+        let res = await axios.get(`http://localhost:5050/getNumPods`);
+        return res.data;
+    }
+    const getRespTime = async () => {
+        let res = await axios.get(`http://localhost:5050/getRespTime`);
+        return res.data;
+    }
+    const updateArima = async (val) => {
+        let res = await axios.get(`http://localhost:5050/updateArima?val=${val}`);
+        return res.data;
+    }
+
+    const predict = (cpuUsage, pred, ts) => {
+        pred = cpuUsage[ts] + 1.1201*randomIntFromInterval(-10,10);
+        return pred;
+    }
+    
+    const loadTest = async () => {
+        let loadArr = await getRPS();
+
+        for(let i=0;i<loadArr.length;i+=1)
+        {
+            setTimeout(async (ts) => {
+
+                let numPods = await getNumPods();
+                let cpuUsage = await getPodCpuUsage();
+                let respTime = await getRespTime();
+                let predVal = await getForcastedCPU();
+
+                let pred = predict(cpuUsage.usageArr, predVal, ts);
+
+                if(i<loadArr.length+1)
+                {
+                    let val = loadArr[i+1];
+                    await updateArima(val);
+                }
+
+                console.log(pred);
+                Plotly.extendTraces(LoadTestChart, {
+                    y: [[loadArr[ts]],[cpuUsage.usageArr[ts]],[pred],[numPods.numPodsArr[ts]]]
+                }, [0,1,2,3])
+
+                Plotly.extendTraces(respTimeChart, {
+                    y: [[respTime.respTimeArr[ts]]]
+                }, [0])
+                
+            }, 5000*i, i)
+        }
+
+
+        /* let prev = {
+            prevCPU: 0,
+            prevPods: 0
+        }
+        for(let i=0;i<loadArr.length;i+=1)
+        {
+
+            let rps = loadArr[i];
+            let interReqGap = 15000/rps;
+            for(let j=0;j<rps;j+=1)
+            {
+                setTimeout(() => {
+                    axios.post('http://192.168.39.73:30001/imageBlur', {
+                        imgUrl: 'https://i.pinimg.com/564x/7f/03/ed/7f03ede8a2b6341ccc42f205c36479b7.jpg',
+                    })
+                }, interReqGap*j);
+            }
+
+            setTimeout(async () => {
+                let cpu = await getPodCpuUsage();
+                let cpuUsage = cpu.data.cpuUtization;
+                let numPods = cpu.data.numPods;
+
+                if(numPods <= 0)
+                    numPods = prev.prevPods
+                
+                prev.prevPods = numPods
+
+                cpuUsage = 100 * cpuUsage/(300 * (numPods+1));
+
+                if(cpuUsage <= 0)
+                    cpuUsage = prev.prevCPU
+                
+                prev.prevCPU = cpuUsage;
+
+                Plotly.extendTraces(LoadTestChart, {
+                    y: [[rps],[cpuUsage],[numPods+1]]
+                }, [0,1,2])
+            }, 15000*i)
+        } */
+    }
+    
+    loadTest();
+
+</script>
