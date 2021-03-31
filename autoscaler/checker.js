@@ -1,5 +1,8 @@
 const  { resourceUtilizationRatio } = require('./resourceUtilizationRatio');
 const { decision } = require('./decision');
+const { ARIMAScaler } = require('./arima');
+
+let arimaModel = new ARIMAScaler();
 
 const main = (resMap, targetUtilization) => {
     check(resMap, targetUtilization);
@@ -9,6 +12,12 @@ const main = (resMap, targetUtilization) => {
 const check = async (resMap,targetUtilization) => {
     let { cpuUtization } = await resMap.monitor.getPodCpuUsage();
     let {numPods, totalRequest} = resMap.getCPURequests();
+
+    arimaModel.arimaUpdate(cpuUtization)
+
+    if(arimaModel.isArima) {
+        cpuUtization = arimaModel.arimaPredict();
+    }
 
     console.log("Check:", cpuUtization, numPods, totalRequest);
 
