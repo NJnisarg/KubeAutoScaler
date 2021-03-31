@@ -3,6 +3,7 @@ const { decision } = require('./decision');
 const { ARIMAScaler } = require('./arima');
 
 let arimaModel = new ARIMAScaler();
+let prevCPU = 0
 
 const main = (resMap, targetUtilization) => {
     check(resMap, targetUtilization);
@@ -10,13 +11,21 @@ const main = (resMap, targetUtilization) => {
 }
 
 const check = async (resMap,targetUtilization) => {
+    const fs = require('fs');
     let { cpuUtization } = await resMap.monitor.getPodCpuUsage();
     let {numPods, totalRequest} = resMap.getCPURequests();
 
     arimaModel.arimaUpdate(cpuUtization)
 
+    console.log("Original CPU: ", cpuUtization)
+
     if(arimaModel.isArima) {
-        cpuUtization = arimaModel.arimaPredict();
+        predUtization = arimaModel.arimaPredict();
+        console.log("Predicted CPU: ", predUtization)
+        console.log("Error: ",cpuUtization - prevCPU)
+        prevCPU = predUtization
+        cpuUtization = predUtization
+        fs.appendFileSync("cpu.txt", cpuUtization + '\n');
     }
 
     console.log("Check:", cpuUtization, numPods, totalRequest);

@@ -30,6 +30,9 @@ class ARIMAScaler {
 
     arimaPredict() {
         const [pred, errors] = this.arimaModel.predict(1);
+        if(pred[0] <= 0) {
+            pred[0] = -pred[0]
+        }
         return pred[0]
     }
 }
