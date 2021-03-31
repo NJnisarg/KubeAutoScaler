@@ -23,6 +23,21 @@ class Monitor {
     
         return {numPods, cpuUtization};
     }
+    getCpuUsage = async () => {
+        let res = await axios.get(`${k8sConf.proxyUrl}/apis/metrics.k8s.io/v1beta1/pods/`);
+        const podMetrics = res.data.items.filter(x => x.metadata.namespace === this.namespace)
+        const numPods = podMetrics.length
+        let podUtilization = []
+        podMetrics.forEach(pod => {
+            pod.containers.forEach(container => {
+                podUtilization.push(parseInt(container.usage.cpu.match(/-?\d+\.?\d*/)))
+            })
+        });
+        console.log("hello")
+        console.log(numPods)
+        console.log(podUtilization)
+        return {numPods, podUtilization};
+    }
     
     getPodMemoryUsage = async () => {
         let res = await axios.get(`${k8sConf.proxyUrl}/apis/metrics.k8s.io/v1beta1/pods/`)

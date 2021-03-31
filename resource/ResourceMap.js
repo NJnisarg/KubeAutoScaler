@@ -12,7 +12,7 @@ class ResourceMap {
     service = null
     nodes = []
     monitor = null
-    templatePath = '/home/njnisarg/KubeAutoScaler/deployment_template/depl.yml'
+    templatePath = '/home/raghav/major_project/KubeAutoScaler/deployment_template/depl.yml'
 
     constructor(namespace) {
         this.namespace = namespace
