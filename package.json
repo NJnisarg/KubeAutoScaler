@@ -12,6 +12,7 @@
     "@kubernetes/client-node": "^0.13.2",
     "arima": "^0.2.1",
     "axios": "^0.21.1",
+    "node-pid-controller": "^1.0.1",
     "yamljs": "^0.3.0"
   }
 }
