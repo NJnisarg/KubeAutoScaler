@@ -1,9 +1,25 @@
+const Controller = require('node-pid-controller');
 const  { resourceUtilizationRatio } = require('./resourceUtilizationRatio');
 const { decision } = require('./decision');
+const fs = require('fs');
+
+// let ctr = new Controller({
+//     k_p: 0.04,
+//     k_i: 0.0,
+//     k_d: 0.0,
+// });
+
+let ctr = new Controller({
+    k_p: 0.6*0.015,
+    k_i: 1.2*0.015/10,
+    k_d: 0.075*0.015*10,
+});
+
+ctr.setTarget(75);
 
 const main = (resMap, targetUtilization) => {
     check(resMap, targetUtilization);
-    setTimeout(main, 10000, resMap, targetUtilization);
+    setTimeout(main, 30000, resMap, targetUtilization);
 }
 
 const check = async (resMap,targetUtilization) => {
@@ -12,11 +28,16 @@ const check = async (resMap,targetUtilization) => {
 
     console.log("Check:", cpuUtization, numPods, totalRequest);
 
-    let ratio = resourceUtilizationRatio(cpuUtization,totalRequest,targetUtilization);
+    if(numPods == 0)
+        return;
+    // let ratio = resourceUtilizationRatio(cpuUtization,totalRequest,targetUtilization);
 
-    let value = decision(ratio, numPods);
-    let diff = Math.ceil(value - numPods);
-
+    // let value = decision(ratio, numPods);
+    // let diff = Math.ceil(value - numPods);
+    console.log(ctr);
+    let value = ctr.update(cpuUtization/totalRequest*100);
+    fs.appendFileSync('cpuVal.txt', `${cpuUtization/totalRequest*100},${numPods}\n`, {encoding:'utf-8'});
+    let diff = -1 * Math.round(value);
     console.log("DIFF:", diff);
 
     if(diff>0){
