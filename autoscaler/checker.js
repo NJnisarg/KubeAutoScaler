@@ -2,6 +2,7 @@ const  { resourceUtilizationRatio } = require('./resourceUtilizationRatio');
 const { decision } = require('./decision');
 const { ARIMAScaler } = require('./arima');
 const Controller = require('node-pid-controller');
+const fs = require('fs');
 
 // let ctr = new Controller({
 //     k_p: 0.04,
@@ -22,13 +23,28 @@ let prevCPU = 0
 
 const main = (resMap, targetUtilization) => {
     check(resMap, targetUtilization);
-    setTimeout(main, 10000, resMap, targetUtilization);
+    setTimeout(main, 20000, resMap, targetUtilization);
 }
 
+let prevUtil = 0
+
 const check = async (resMap,targetUtilization) => {
-    const fs = require('fs');
-    let { cpuUtization } = await resMap.monitor.getPodCpuUsage();
-    let {numPods, totalRequest} = resMap.getCPURequests();
+    let { numPods, cpuUtization } = await resMap.monitor.getPodCpuUsage();
+    let np = resMap.getCPURequests().numPods;
+
+    // Smoothening data
+    if(np !== numPods && np > numPods)
+    {
+        let podDiff = np - numPods;
+        if(prevUtil > 0)
+            cpuUtization += (podDiff*300*prevUtil);
+        else
+            cpuUtization += (podDiff*300*0.5);
+        numPods+=podDiff;
+        console.log("PodDiff", podDiff);
+    }
+    let totalRequest = numPods * 300; // Set in the deployment
+    fs.appendFileSync('cpuVal.txt', `${cpuUtization/totalRequest*100},${numPods}\n`, {encoding:'utf-8'});
 
     arimaModel.arimaUpdate(cpuUtization)
 
@@ -59,9 +75,10 @@ const check = async (resMap,targetUtilization) => {
         let diff1 = -1 * Math.round(value1);
         console.log("DIFF 1: ", diff1);
 
-        diff = Math.round(0.5*diff + 0.5*diff1)
+        diff = Math.round(0.8*diff + 0.2*diff1)
     }
 
+    prevUtil = cpuUtization/totalRequest;
     console.log("FInal DIFF: ", diff)
 
     if(diff>0){

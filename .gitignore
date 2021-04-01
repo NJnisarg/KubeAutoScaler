@@ -4,3 +4,4 @@ node_modules/*
 testApp/node_modules
 load_profiler/__pycache__/
 venv/
+.venv/
