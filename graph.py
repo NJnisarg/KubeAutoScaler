@@ -3,15 +3,24 @@ import math
 
 def plot():
     arr = [0]
-    with open('cpuVal.txt') as f:
+    with open('rps_resp.txt') as f:
         for line in f:
             l = len(arr)
-            # arr.append((arr[l-1]*l + math.floor(float(line.split('\n')[0])))/(l+1))
-            arr.append(math.floor(float(line.split('\n')[0])))
+            arr.append(math.floor(float(line.split(',')[1].split("\n")[0])/100))
         
-        x = [i for i in range(0, len(arr))]
-        print(x, arr)
-        plt.plot(x, arr)
-        plt.savefig('qu.png')
+        newArr = []
+        cSum = 0
+        for i in range(0, len(arr)):
+            if(i%4==0):
+                newArr.append(cSum/4)
+                cSum = 0
+            else:
+                cSum += 4*arr[i]
+            
+
+        x = [i for i in range(0, len(newArr))]
+        print(x, newArr)
+        plt.plot(x, newArr)
+        plt.savefig('res_PID.png');
 
 plot()

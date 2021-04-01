@@ -19,12 +19,27 @@ ctr.setTarget(75);
 
 const main = (resMap, targetUtilization) => {
     check(resMap, targetUtilization);
-    setTimeout(main, 30000, resMap, targetUtilization);
+    setTimeout(main, 20000, resMap, targetUtilization);
 }
 
+let prevUtil = 0
+
 const check = async (resMap,targetUtilization) => {
-    let { cpuUtization } = await resMap.monitor.getPodCpuUsage();
-    let {numPods, totalRequest} = resMap.getCPURequests();
+    let { numPods, cpuUtization } = await resMap.monitor.getPodCpuUsage();
+    let np = resMap.getCPURequests().numPods;
+
+    // Smoothening data
+    if(np !== numPods && np > numPods)
+    {
+        let podDiff = np - numPods;
+        if(prevUtil > 0)
+            cpuUtization += (podDiff*300*prevUtil);
+        else
+            cpuUtization += (podDiff*300*0.5);
+        numPods+=podDiff;
+        console.log("PodDiff", podDiff);
+    }
+    let totalRequest = numPods * 300; // Set in the deployment
 
     console.log("Check:", cpuUtization, numPods, totalRequest);
 
@@ -36,6 +51,7 @@ const check = async (resMap,targetUtilization) => {
     // let diff = Math.ceil(value - numPods);
     console.log(ctr);
     let value = ctr.update(cpuUtization/totalRequest*100);
+    prevUtil = cpuUtization/totalRequest;
     fs.appendFileSync('cpuVal.txt', `${cpuUtization/totalRequest*100},${numPods}\n`, {encoding:'utf-8'});
     let diff = -1 * Math.round(value);
     console.log("DIFF:", diff);
